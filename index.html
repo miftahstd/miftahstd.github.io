@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Prompt Video</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter (for body) and Bubblegum Sans (for header) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap" rel="stylesheet">
+    <style>
+        /* Gaya font kustom */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Latar belakang gradien romantis: pink, ungu lembut, merah hangat */
+            background: linear-gradient(to bottom right, #fbcfe8, #d8b4fe, #fca5a5); /* pink-200, purple-300, red-300 */
+            overflow-x: hidden; /* Mencegah scrollbar horizontal */
+            cursor: default; /* Mengatur kursor default, animasi akan menangani kursor kustom */
+            position: relative; /* Penting untuk posisi absolut elemen animasi */
+        }
+
+        /* Container untuk elemen hati yang dianimasikan */
+        .heart-cursor-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Memungkinkan klik melewati container ini */
+            z-index: 9999; /* Pastikan selalu di atas */
+        }
+
+        /* Gaya untuk masing-masing elemen hati */
+        .heart {
+            position: absolute;
+            color: #ef4444; /* Warna hati merah */
+            font-size: 24px; /* Ukuran hati */
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1); /* Posisikan di tengah dan skala awal */
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out; /* Transisi untuk animasi */
+            animation: floatUpFadeOut 1.5s forwards ease-out; /* Animasi jatuh dan memudar */
+            pointer-events: none; /* Pastikan hati tidak mengganggu interaksi mouse */
+            text-shadow: 0 0 5px rgba(255,0,0,0.5); /* Sedikit bayangan untuk efek */
+        }
+
+        /* Keyframes untuk animasi hati jatuh dan memudar */
+        @keyframes floatUpFadeOut {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -150%) scale(0.5); /* Bergerak ke atas dan mengecil */
+            }
+        }
+
+        /* Animasi fade-in-up untuk prompt yang dihasilkan */
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        /* Scrollbar kustom untuk estetika yang lebih baik jika konten meluap */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #fce7f3; /* pink-50 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #db2777; /* pink-600 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #be185d; /* pink-700 */
+        }
+
+        /* Efek teks pelangi untuk judul header */
+        .rainbow-text {
+            background-image: linear-gradient(to right, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #6366f1, #a855f7); /* Colors of the rainbow */
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent; /* Membuat teks transparan untuk menampilkan gradien latar belakang */
+            background-size: 200% auto; /* Untuk animasi pergerakan gradien */
+            animation: rainbow-animation 10s linear infinite; /* Animasi pelangi */
+            display: inline-block; /* Penting agar background-clip berfungsi */
+        }
+
+        @keyframes rainbow-animation {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        /* Gaya untuk judul header utama */
+        .header-title-font {
+            font-family: 'Bubblegum Sans', sans-serif; /* Menggunakan font 'Bubblegum Sans' */
+        }
+
+        /* Animasi melayang untuk header */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating-header {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 text-gray-900">
+
+    <!-- Kontainer untuk kursor hati yang dianimasikan -->
+    <div class="heart-cursor-container" id="heartCursorContainer"></div>
+
+    <!-- Header -->
+    <header class="w-full bg-pink-700 bg-opacity-40 text-white py-6 px-4 mb-8 shadow-lg rounded-xl text-center z-10 floating-header">
+        <h1 class="text-5xl font-extrabold tracking-tight mb-2 rainbow-text header-title-font">Prompt Veo 3</h1>
+        <p class="text-xl opacity-90">by engkungs</p>
+    </header>
+
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-4xl transform transition-all duration-300 hover:scale-[1.005] z-10">
+        <h1 class="text-4xl font-extrabold text-center text-pink-600 mb-8 tracking-tight">
+            Generator Prompt Video
+        </h1>
+
+        <!-- Tampilan ID Pengguna (jika tersedia) -->
+        <p id="userIdDisplay" class="text-xs text-gray-500 text-center mb-4 hidden">
+            ID Pengguna Anda: <span id="userIdValue" class="font-mono text-pink-500 break-words"></span>
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Dropdown Genre -->
+            <div>
+                <label for="genre" class="block text-sm font-medium text-gray-700 mb-2">Genre/Tema:</label>
+                <select id="genre" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white text-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm transition-all duration-200">
+                    <option value="">Pilih Genre</option>
+                    <option value="Aksi">Aksi</option>
+                    <option value="Komedi">Komedi</option>
+                    <option value="Sci-Fi">Sci-Fi</option>
+                    <option value="Fantasi">Fantasi</option>
+                    <option value="Drama">Drama</option>
+                    <option value="Horor">Horor</option>
+                    <option value="Dokumenter">Dokumenter</option>
+                    <option value="Edukasi">Edukasi</option>
+                    <option value="Animasi">Animasi</option>
+                    <option value="Romantis">Romantis</option>
+                </select>
+            </div>
+
+            <!-- Dropdown Durasi -->
+            <div>
+                <label for="duration" class="block text-sm font-medium text-gray-700 mb-2">Durasi:</label>
+                <select id="duration" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white text-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm transition-all duration-200">
+                    <option value="">Pilih Durasi</option>
+                    <option value="8 detik">8 detik</option>
+                    <option value="Pendek (1-5 menit)">Pendek (1-5 menit)</option>
+                    <option value="Menengah (5-15 menit)">Menengah (5-15 menit)</option>
+                    <option value="Panjang (15+ menit)">Panjang (15+ menit)</option>
+                </select>
+            </div>
+
+            <!-- Dropdown Gaya Visual -->
+            <div>
+                <label for="visualStyle" class="block text-sm font-medium text-gray-700 mb-2">Gaya Visual:</label>
+                <select id="visualStyle" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white text-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm transition-all duration-200">
+                    <option value="">Pilih Gaya Visual</option>
+                    <option value="Realistis">Realistis</option>
+                    <option value="Animasi 2D">Animasi 2D</option>
+                    <option value="Animasi 3D">Animasi 3D</option>
+                    <option value="Vintage/Retro">Vintage/Retro</option>
+                    <option value="Futuristik">Futuristik</option>
+                    <option value="Minimalis">Minimalis</option>
+                </select>
+            </div>
+
+            <!-- Dropdown Sudut Kamera -->
+            <div>
+                <label for="cameraAngle" class="block text-sm font-medium text-gray-700 mb-2">Sudut Kamera (Opsional):</label>
+                <select id="cameraAngle" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white text-gray-900 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm transition-all duration-200">
+                    <option value="">Pilih Sudut Kamera</option>
+                    <option value="Wide Shot">Wide Shot (Pemandangan Luas)</option>
+                    <option value="Medium Shot">Medium Shot (Pemandangan Sedang)</option>
+                    <option value="Close-up">Close-up (Jarak Dekat)</option>
+                    <option value="Dutch Angle">Dutch Angle (Sudut Belanda)</option>
+                    <option value="Low Angle">Low Angle (Sudut Rendah)</option>
+                    <option value="High Angle">High Angle (Sudut Tinggi)</option>
+                    <option value="Over-the-Shoulder">Over-the-Shoulder (Atas Bahu)</option>
+                    <option value="POV">POV (Sudut Pandang Karakter)</option>
+                </select>
+            </div>
+
+            <!-- Input Karakter Spesifik 1 -->
+            <div class="md:col-span-1">
+                <label for="character1Name" class="block text-sm font-medium text-gray-700 mb-2">Karakter Spesifik 1 (Opsional):</label>
+                <input type="text" id="character1Name" placeholder="Contoh: Alice" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm transition-all duration-200" />
+            </div>
+            <div class="md:col-span-2">
+                <label for="character1Description" class="block text-sm font-medium text-gray-700 mb-2">Deskripsi Karakter Spesifik 1 (Opsional):</label>
+                <textarea id="character1Description" placeholder="Contoh: Pemimpi yang bersemangat, mencari keadilan." rows="2" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm transition-all duration-200"></textarea>
+            </div>
+
+            <!-- Input Karakter Spesifik 2 -->
+            <div class="md:col-span-1">
+                <label for="character2Name" class="block text-sm font-medium text-gray-700 mb-2">Karakter Spesifik 2 (Opsional):</label>
+                <input type="text" id="character2Name" placeholder="Contoh: Bob" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm transition-all duration-200" />
+            </div>
+            <div class="md:col-span-2">
+                <label for="character2Description" class="block text-sm font-medium text-gray-700 mb-2">Deskripsi Karakter Spesifik 2 (Opsional):</label>
+                <textarea id="character2Description" placeholder="Contoh: Teman yang setia namun skeptis, suka humor gelap." rows="2" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm transition-all duration-200"></textarea>
+            </div>
+
+            <!-- Input Lokasi -->
+            <div class="md:col-span-full">
+                <label for="location" class="block text-sm font-medium text-gray-700 mb-2">Lokasi (Opsional):</label>
+                <input type="text" id="location" placeholder="Contoh: Kota futuristik, Hutan ajaib" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm transition-all duration-200" />
+            </div>
+
+            <!-- Input Konflik Utama -->
+            <div class="md:col-span-full">
+                <label for="mainConflict" class="block text-sm font-medium text-gray-700 mb-2">Konflik/Plot Utama (Opsional):</label>
+                <input type="text" id="mainConflict" placeholder="Contoh: Mencari artefak kuno, Melarikan diri dari kejaran" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm transition-all duration-200" />
+            </div>
+
+            <!-- Input Contoh Dialog 1 -->
+            <div class="md:col-span-full">
+                <label for="sampleDialogue1" class="block text-sm font-medium text-gray-700 mb-2">Contoh Dialog 1 (Opsional):</label>
+                <textarea id="sampleDialogue1" placeholder="Contoh: 'Alice: Aku tidak percaya ini terjadi!'" rows="2" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm transition-all duration-200"></textarea>
+            </div>
+
+            <!-- Input Contoh Dialog 2 -->
+            <div class="md:col-span-full">
+                <label for="sampleDialogue2" class="block text-sm font-medium text-gray-700 mb-2">Contoh Dialog 2 (Opsional):</label>
+                <textarea id="sampleDialogue2" placeholder="Contoh: 'Bob: Tenang, kita akan menemukan jalan keluarnya.'" rows="2" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm transition-all duration-200"></textarea>
+            </div>
+
+            <!-- Input Aksi Akhir -->
+            <div class="md:col-span-full">
+                <label for="finalAction" class="block text-sm font-medium text-gray-700 mb-2">Aksi Akhir (Opsional):</label>
+                <input type="text" id="finalAction" placeholder="Contoh: Karakter utama tersenyum penuh kemenangan saat matahari terbit." class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm transition-all duration-200" />
+            </div>
+        </div>
+
+        <!-- Tombol Hasilkan -->
+        <button id="generateButton" class="w-full py-3 px-6 rounded-lg text-lg font-semibold shadow-lg transform transition-all duration-300 bg-pink-600 text-white hover:bg-pink-700 hover:scale-[1.01] active:bg-pink-800">
+            Hasilkan Prompt Video
+        </button>
+
+        <!-- Area Tampilan Prompt -->
+        <div id="errorDisplay" class="mt-6 p-4 bg-red-500 border border-red-700 text-white rounded-md shadow-md hidden">
+            <p class="font-semibold">Kesalahan:</p>
+            <p id="errorMessage"></p>
+        </div>
+
+        <div id="generatedPromptArea" class="mt-8 p-6 bg-pink-50 border border-pink-200 rounded-xl shadow-inner hidden">
+            <h2 class="text-2xl font-bold text-pink-700 mb-4">Prompt Video Anda:</h2>
+            <div id="promptContent" class="prose max-w-none text-gray-800 leading-relaxed">
+                <!-- Prompt yang dihasilkan akan ditempatkan di sini -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-8 text-center text-gray-500 text-sm">
+        <p>by engkungs</p>
+    </footer>
+
+    <script type="module">
+        // Import modul Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Referensi elemen DOM
+        const genreSelect = document.getElementById('genre');
+        const durationSelect = document.getElementById('duration');
+        const visualStyleSelect = document.getElementById('visualStyle');
+        const cameraAngleSelect = document.getElementById('cameraAngle');
+        // const mainCharacterInput = document.getElementById('mainCharacter'); // Dihapus
+        const character1NameInput = document.getElementById('character1Name');
+        const character1DescriptionInput = document.getElementById('character1Description');
+        const character2NameInput = document.getElementById('character2Name');
+        const character2DescriptionInput = document.getElementById('character2Description');
+        const locationInput = document.getElementById('location');
+        const mainConflictInput = document.getElementById('mainConflict');
+        const sampleDialogue1Input = document.getElementById('sampleDialogue1');
+        const sampleDialogue2Input = document.getElementById('sampleDialogue2');
+        const finalActionInput = document.getElementById('finalAction');
+        const generateButton = document.getElementById('generateButton');
+        const errorDisplay = document.getElementById('errorDisplay');
+        const errorMessage = document.getElementById('errorMessage');
+        const generatedPromptArea = document.getElementById('generatedPromptArea');
+        const promptContent = document.getElementById('promptContent');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const userIdValue = document.getElementById('userIdValue');
+        const heartCursorContainer = document.getElementById('heartCursorContainer');
+
+        // Variabel state lokal
+        let selectedGenre = '';
+        let selectedDuration = '';
+        let selectedVisualStyle = '';
+        let selectedCameraAngle = '';
+        let locationVal = '';
+        let mainConflict = '';
+        let character1Name = '';
+        let character1Description = '';
+        let character2Name = '';
+        let character2Description = '';
+        let sampleDialogue1 = '';
+        let sampleDialogue2 = '';
+        let finalAction = '';
+
+        let isLoading = false;
+        let isAuthReady = false;
+        let auth = null;
+
+        // Fungsi untuk memperbarui status loading UI
+        function setLoading(loading) {
+            isLoading = loading;
+            if (isLoading) {
+                generateButton.disabled = true;
+                generateButton.classList.add('bg-pink-400', 'text-pink-100', 'cursor-not-allowed');
+                generateButton.classList.remove('bg-pink-600', 'text-white', 'hover:bg-pink-700', 'hover:scale-[1.01]', 'active:bg-pink-800');
+                generateButton.innerHTML = `
+                    <div class="flex items-center justify-center">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Menghasilkan...
+                    </div>
+                `;
+            } else {
+                generateButton.disabled = false;
+                generateButton.classList.remove('bg-pink-400', 'text-pink-100', 'cursor-not-allowed');
+                generateButton.classList.add('bg-pink-600', 'text-white', 'hover:bg-pink-700', 'hover:scale-[1.01]', 'active:bg-pink-800');
+                generateButton.textContent = 'Hasilkan Prompt Video';
+            }
+        }
+
+        // Fungsi untuk menampilkan/menyembunyikan pesan error
+        function displayError(message) {
+            if (message) {
+                errorDisplay.classList.remove('hidden');
+                errorMessage.textContent = message;
+            } else {
+                errorDisplay.classList.add('hidden');
+                errorMessage.textContent = '';
+            }
+        }
+
+        // Fungsi untuk merender prompt dari objek JSON
+        function renderPrompt(promptData, language) {
+            let html = '';
+            if (language === 'en') {
+                html += `<h3><strong class="text-pink-700">English Version:</strong></h3>`;
+                html += `<p><strong>Video Title:</strong> ${promptData.video_title || 'N/A'}</p>`;
+                html += `<p><strong>Synopsis:</strong> ${promptData.synopsis || 'N/A'}</p>`;
+                if (promptData.main_characters && promptData.main_characters.length > 0) {
+                    html += `<p><strong>Main Characters:</strong></p><ul>`;
+                    promptData.main_characters.forEach(char => {
+                        html += `<li>&bull; ${char.name || 'N/A'}: ${char.description || 'N/A'}</li>`;
+                    });
+                    html += `</ul>`;
+                } else {
+                    html += `<p><strong>Main Characters:</strong> No specific main characters provided. The AI may have generated some based on context.</p>`;
+                }
+                html += `<p><strong>Setting/Location:</strong> ${promptData.setting_location || 'N/A'}</p>`;
+                html += `<p><strong>Main Plot Points:</strong></p><ul>`;
+                html += `<li>&bull; Beginning: ${promptData.main_plot_points?.beginning || 'N/A'}</li>`;
+                html += `<li>&bull; Middle: ${promptData.main_plot_points?.middle || 'N/A'}</li>`;
+                html += `<li>&bull; End: ${promptData.main_plot_points?.end || 'N/A'}</li>`;
+                html += `</ul>`;
+                html += `<p><strong>Visual Style/Mood:</strong> ${promptData.visual_style_mood || 'N/A'}</p>`;
+                html += `<p><strong>Camera Angle:</strong> ${promptData.camera_angle || 'N/A'}</p>`;
+                if (promptData.sample_dialogue && promptData.sample_dialogue.length > 0) {
+                    html += `<p><strong>Sample Dialogue:</strong></p><ul>`;
+                    promptData.sample_dialogue.forEach(dialog => {
+                        html += `<li>&bull; ${dialog || 'N/A'}</li>`;
+                    });
+                    html += `</ul>`;
+                } else {
+                    html += `<p><strong>Sample Dialogue:</strong> N/A</p>`;
+                }
+                html += `<p><strong>Final Action:</strong> ${promptData.final_action || 'N/A'}</p>`;
+                html += `<p><strong>Additional Notes:</strong> ${promptData.additional_notes || 'N/A'}</p>`;
+            } else { // Indonesian version
+                html += `<h3 class="mt-6"><strong class="text-pink-700">Versi Indonesia:</strong></h3>`;
+                html += `<p><strong>Judul Video:</strong> ${promptData.judul_video || 'N/A'}</p>`;
+                html += `<p><strong>Sinopsis:</strong> ${promptData.sinopsis || 'N/A'}</p>`;
+                if (promptData.karakter_utama && promptData.karakter_utama.length > 0) {
+                    html += `<p><strong>Karakter Utama:</strong></p><ul>`;
+                    promptData.karakter_utama.forEach(char => {
+                        html += `<li>&bull; ${char.nama || 'N/A'}: ${char.deskripsi || 'N/A'}</li>`;
+                    });
+                    html += `</ul>`;
+                } else {
+                    html += `<p><strong>Karakter Utama:</strong> Tidak ada karakter utama spesifik yang disediakan. AI mungkin telah menghasilkan beberapa berdasarkan konteks.</p>`;
+                }
+                html += `<p><strong>Setting/Lokasi:</strong> ${promptData.setting_lokasi || 'N/A'}</p>`;
+                html += `<p><strong>Poin Plot Utama:</strong></p><ul>`;
+                html += `<li>&bull; Awal: ${promptData.poin_plot_utama?.awal || 'N/A'}</li>`;
+                html += `<li>&bull; Tengah: ${promptData.poin_plot_utama?.tengah || 'N/A'}</li>`;
+                html += `<li>&bull; Akhir: ${promptData.poin_plot_utama?.akhir || 'N/A'}</li>`;
+                html += `</ul>`;
+                html += `<p><strong>Gaya Visual/Mood:</strong> ${promptData.gaya_visual_mood || 'N/A'}</p>`;
+                html += `<p><strong>Sudut Kamera:</strong> ${promptData.sudut_kamera || 'N/A'}</p>`;
+                if (promptData.contoh_dialog && promptData.contoh_dialog.length > 0) {
+                    html += `<p><strong>Contoh Dialog:</strong></p><ul>`;
+                    promptData.contoh_dialog.forEach(dialog => {
+                        html += `<li>&bull; ${dialog || 'N/A'}</li>`;
+                    });
+                    html += `</ul>`;
+                } else {
+                    html += `<p><strong>Contoh Dialog:</strong> N/A</p>`;
+                }
+                html += `<p><strong>Aksi Akhir:</strong> ${promptData.aksi_akhir || 'N/A'}</p>`;
+                html += `<p><strong>Catatan Tambahan:</strong> ${promptData.catatan_tambahan || 'N/A'}</p>`;
+            }
+            return html;
+        }
+
+        // Event listener untuk perubahan input
+        genreSelect.addEventListener('change', (e) => selectedGenre = e.target.value);
+        durationSelect.addEventListener('change', (e) => selectedDuration = e.target.value);
+        visualStyleSelect.addEventListener('change', (e) => selectedVisualStyle = e.target.value);
+        cameraAngleSelect.addEventListener('change', (e) => selectedCameraAngle = e.target.value);
+        // mainCharacterInput.addEventListener('input', (e) => mainCharacter = e.target.value); // Dihapus dan tidak digunakan
+        character1NameInput.addEventListener('input', (e) => character1Name = e.target.value);
+        character1DescriptionInput.addEventListener('input', (e) => character1Description = e.target.value);
+        character2NameInput.addEventListener('input', (e) => character2Name = e.target.value);
+        character2DescriptionInput.addEventListener('input', (e) => character2Description = e.target.value);
+        locationInput.addEventListener('input', (e) => locationVal = e.target.value);
+        mainConflictInput.addEventListener('input', (e) => mainConflict = e.target.value);
+        sampleDialogue1Input.addEventListener('input', (e) => sampleDialogue1 = e.target.value);
+        sampleDialogue2Input.addEventListener('input', (e) => sampleDialogue2 = e.target.value);
+        finalActionInput.addEventListener('input', (e) => finalAction = e.target.value);
+
+        // Fungsi utama untuk menghasilkan prompt
+        generateButton.addEventListener('click', async () => {
+            if (!selectedGenre || !selectedDuration || !selectedVisualStyle) {
+                displayError('Harap pilih Genre, Durasi, dan Gaya Visual.');
+                return;
+            }
+
+            setLoading(true);
+            displayError('');
+            generatedPromptArea.classList.add('hidden');
+            promptContent.innerHTML = '';
+
+            let promptText = `Generate a video idea prompt based on the following criteria. Provide the output in JSON format, containing both English and Indonesian versions. Ensure correct grammar for both languages.
+For the Indonesian version, ensure any generated dialogue or character descriptions (if not explicitly provided by the user) have a subtle Javanese accent/flavor in the phrasing, where appropriate for the character and context.
+
+Criteria:
+Theme/Genre: ${selectedGenre}
+Duration: ${selectedDuration}
+Visual Style: ${selectedVisualStyle}
+Camera Angle (optional): ${selectedCameraAngle || 'Not specified'}
+Location (optional): ${locationVal || 'Not specified'}
+Main Conflict/Plot (optional): ${mainConflict || 'Not specified'}
+`;
+
+            // Hanya sertakan karakter spesifik jika ada. Instruksikan AI untuk memperlakukan ini sebagai karakter utama.
+            if (character1Name || character2Name) {
+                promptText += `Specific Characters (These are the main characters for the video):\n`;
+                if (character1Name) {
+                    promptText += `- Specific Character 1 Name: ${character1Name}\n`;
+                    promptText += `  Specific Character 1 Description: ${character1Description || '(Generate a brief, fitting description for this character based on context and genre.)'}\n`;
+                }
+                if (character2Name) {
+                    promptText += `- Specific Character 2 Name: ${character2Name}\n`;
+                    promptText += `  Specific Character 2 Description: ${character2Description || '(Generate a brief, fitting description for this character based on context and genre.)'}\n`;
+                }
+            } else {
+                promptText += `Specific Characters (None provided, generate two main characters for the video based on context):\n`;
+            }
+
+            if (sampleDialogue1 || sampleDialogue2) {
+                promptText += `Provided Dialogue Examples:\n`;
+                if (sampleDialogue1) {
+                    promptText += `Dialogue 1: "${sampleDialogue1}"\n`;
+                }
+                if (sampleDialogue2) {
+                    promptText += `Dialogue 2: "${sampleDialogue2}"\n`;
+                }
+                promptText += `Incorporate these dialogues or develop from them.\n`;
+            }
+
+            if (finalAction) {
+                promptText += `Provided Final Action: "${finalAction}"\n`;
+                promptText += `Incorporate this action or develop from it.\n`;
+            }
+
+            promptText += `
+JSON Schema for the response:
+{
+  "english_prompt": {
+    "video_title": "string",
+    "synopsis": "string",
+    "main_characters": [
+      {"name": "string", "description": "string"}
+    ],
+    "setting_location": "string",
+    "main_plot_points": {
+      "beginning": "string",
+      "middle": "string",
+      "end": "string"
+    },
+    "visual_style_mood": "string",
+    "camera_angle": "string",
+    "sample_dialogue": ["string"],
+    "final_action": "string",
+    "additional_notes": "string"
+  },
+  "indonesian_prompt": {
+    "judul_video": "string",
+    "sinopsis": "string",
+    "karakter_utama": [
+      {"nama": "string", "deskripsi": "string"}
+    ],
+    "setting_lokasi": "string",
+    "poin_plot_utama": {
+      "awal": "string",
+      "tengah": "string",
+      "akhir": "string"
+    },
+    "gaya_visual_mood": "string",
+    "sudut_kamera": "string",
+    "contoh_dialog": ["string"],
+    "aksi_akhir": "string",
+    "catatan_tambahan": "string"
+  }
+}
+
+Ensure the output is a valid JSON object only. Do not include any conversational text outside the JSON.
+`;
+
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: promptText }] });
+            const payload = {
+                contents: chatHistory,
+                generationConfig: {
+                    responseMimeType: "application/json", // Request JSON output
+                    responseSchema: { // Define expected JSON structure
+                        type: "OBJECT",
+                        properties: {
+                            "english_prompt": {
+                                type: "OBJECT",
+                                properties: {
+                                    "video_title": { "type": "STRING" },
+                                    "synopsis": { "type": "STRING" },
+                                    "main_characters": {
+                                        "type": "ARRAY",
+                                        "items": {
+                                            "type": "OBJECT",
+                                            "properties": {
+                                                "name": { "type": "STRING" },
+                                                "description": { "type": "STRING" }
+                                            }
+                                        }
+                                    },
+                                    "setting_location": { "type": "STRING" },
+                                    "main_plot_points": {
+                                        "type": "OBJECT",
+                                        "properties": {
+                                            "beginning": { "type": "STRING" },
+                                            "middle": { "type": "STRING" },
+                                            "end": { "type": "STRING" }
+                                        }
+                                    },
+                                    "visual_style_mood": { "type": "STRING" },
+                                    "camera_angle": { "type": "STRING" },
+                                    "sample_dialogue": { "type": "ARRAY", "items": { "type": "STRING" } },
+                                    "final_action": { "type": "STRING" },
+                                    "additional_notes": { "type": "STRING" }
+                                },
+                                "required": ["video_title", "synopsis", "main_characters", "setting_location", "main_plot_points", "visual_style_mood", "final_action"]
+                            },
+                            "indonesian_prompt": {
+                                type: "OBJECT",
+                                properties: {
+                                    "judul_video": { "type": "STRING" },
+                                    "sinopsis": { "type": "STRING" },
+                                    "karakter_utama": {
+                                        "type": "ARRAY",
+                                        "items": {
+                                            "type": "OBJECT",
+                                            "properties": {
+                                                "nama": { "type": "STRING" },
+                                                "deskripsi": { "type": "STRING" }
+                                            }
+                                        }
+                                    },
+                                    "setting_lokasi": { "type": "STRING" },
+                                    "poin_plot_utama": {
+                                        "type": "OBJECT",
+                                        "properties": {
+                                            "awal": { "type": "STRING" },
+                                            "tengah": { "type": "STRING" },
+                                            "akhir": { "type": "STRING" }
+                                        }
+                                    },
+                                    "gaya_visual_mood": { "type": "STRING" },
+                                    "sudut_kamera": { "type": "STRING" },
+                                    "contoh_dialog": { "type": "ARRAY", "items": { "type": "STRING" } },
+                                    "aksi_akhir": { "type": "STRING" },
+                                    "catatan_tambahan": { "type": "STRING" }
+                                },
+                                "required": ["judul_video", "sinopsis", "karakter_utama", "setting_lokasi", "poin_plot_utama", "gaya_visual_mood", "aksi_akhir"]
+                            }
+                        },
+                        "required": ["english_prompt", "indonesian_prompt"]
+                    }
+                }
+            };
+            const apiKey = "AIzaSyC6S8D_2K4YzH1wv9uhwzl9J0T7EmQpM7A"; // Kunci API akan disediakan secara otomatis oleh lingkungan Canvas
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log("API Raw Result:", result);
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const jsonText = result.candidates[0].content.parts[0].text;
+                    const parsedPrompt = JSON.parse(jsonText);
+
+                    promptContent.innerHTML = '';
+                    promptContent.appendChild(document.createElement('hr'));
+
+                    // Render versi Bahasa Inggris
+                    promptContent.innerHTML += renderPrompt(parsedPrompt.english_prompt, 'en');
+                    promptContent.appendChild(document.createElement('hr'));
+
+                    // Render versi Bahasa Indonesia
+                    promptContent.innerHTML += renderPrompt(parsedPrompt.indonesian_prompt, 'id');
+
+
+                    generatedPromptArea.classList.remove('hidden');
+                    generatedPromptArea.classList.add('animate-fade-in-up');
+                } else {
+                    displayError("Failed to generate prompt. Unexpected response structure or empty content.");
+                    console.error("Unexpected API response structure:", result);
+                }
+            } catch (apiError) {
+                displayError(`An error occurred while contacting the API: ${apiError.message}. Please check your API key and try again.`);
+                console.error("API call error:", apiError);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Firebase Initialization and Authentication
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+
+                if (Object.keys(firebaseConfig).length === 0) {
+                    console.warn("Firebase config not found. Running without Firebase services.");
+                    isAuthReady = true;
+                    return;
+                }
+
+                const app = initializeApp(firebaseConfig);
+                const firestoreDb = getFirestore(app);
+                auth = getAuth(app);
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userIdValue.textContent = user.uid;
+                        userIdDisplay.classList.remove('hidden');
+                    } else {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            try {
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                                userIdValue.textContent = auth.currentUser?.uid;
+                                userIdDisplay.classList.remove('hidden');
+                            } catch (authError) {
+                                console.error("Error signing in with custom token:", authError);
+                                await signInAnonymously(auth);
+                                userIdValue.textContent = auth.currentUser?.uid || crypto.randomUUID();
+                                userIdDisplay.classList.remove('hidden');
+                            }
+                        } else {
+                            await signInAnonymously(auth);
+                            userIdValue.textContent = auth.currentUser?.uid || crypto.randomUUID();
+                            userIdDisplay.classList.remove('hidden');
+                        }
+                    }
+                    isAuthReady = true;
+                });
+            } catch (e) {
+                console.error("Error initializing Firebase:", e);
+                displayError("Failed to initialize Firebase.");
+                isAuthReady = true;
+            }
+        });
+
+        // Logika animasi kursor hati
+        function createHeart(x, y) {
+            const heart = document.createElement('span');
+            heart.classList.add('heart');
+            heart.innerHTML = '❤️';
+            heart.style.left = `${x}px`;
+            heart.style.top = `${y}px`;
+            heartCursorContainer.appendChild(heart);
+
+            heart.addEventListener('animationend', () => {
+                heart.remove();
+            });
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if (Math.random() > 0.6) {
+                createHeart(e.clientX, e.clientY);
+            }
+        });
+    </script>
+</body>
+</html>
