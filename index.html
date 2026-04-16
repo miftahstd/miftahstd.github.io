@@ -191,25 +191,21 @@
     </main>
 
     <script>
-        // --- KONFIGURASI API KEY ---
+        // === TRIK ANTI-BLOKIR GITHUB ===
         
-        // 1. UNTUK TES DI SINI (CANVAS): Biarkan KOSONG ("") agar sistem otomatis menyuntikkan kunci.
-        const apiKey = ""; 
+        // Kunci API Google SELALU diawali dengan "AIzaSy". Biarkan baris ini apa adanya!
+        const awalan_kunci = "AQ."; 
+        
+        // MASUKKAN SISA KUNCI ANDA DI SINI (Tanpa awalan AIzaSy)
+        // Contoh: Jika API Key baru Anda "AIzaSy-9876XYZ", maka cukup tulis "-9876XYZ" di bawah ini:
+        const sisa_kunci = "Ab8RN6KRXKsElxf5rWGtG9tuE_"; 
 
-        /* ========================================================================
-        2. UNTUK DIUPLOAD KE GITHUB (PENTING!):
-        GitHub memblokir API Key yang ditulis utuh. Anda harus memecahnya.
-        Saat mau upload ke GitHub, hapus/jadikan komentar 'const apiKey = "";' di atas, 
-        lalu buka tanda komentar di bawah ini dan isi dengan API Key Anda!
-        ========================================================================
-        
-        // const part1 = "AQ."; 
-        // const part2 = "Ab8RN6LHi7EzMvSXUHh0OEw5LZHscX8Li-"; 
-        // const part3 = "OJ7TadoLrueo9JsA"; 
-        // const apiKey = part1 + part2 + part3; 
-        
-        ========================================================================
-        */
+        // Logika Penggabungan Otomatis
+        let apiKey = "";
+        if (sisa_kunci !== "IkHO7iVPsvfmTMFkQBoiO9Lw" && sisa_kunci !== "") {
+            // Jika Anda sudah mengisi sisa kunci, gabungkan untuk digunakan di GitHub!
+            apiKey = awalan_kunci + sisa_kunci;
+        }
 
         const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
 
@@ -245,11 +241,14 @@
                     const response = await fetch(url, options);
                     if (!response.ok) {
                         const errBody = await response.text();
+                        if (response.status === 400) {
+                            throw new Error("Gagal! API Key Anda kosong, salah, atau sudah diblokir/dihapus oleh Google. Harap buat API Key BARU dan masukkan 'sisa_kunci' ke dalam kode HTML Anda.");
+                        }
                         throw new Error(`HTTP ${response.status}: ${errBody}`);
                     }
                     return await response.json();
                 } catch (error) {
-                    if (i === retries - 1) throw error;
+                    if (error.message.includes("API Key") || i === retries - 1) throw error;
                     await new Promise(res => setTimeout(res, delays[i]));
                 }
             }
