@@ -59,13 +59,6 @@
             <!-- Kiri: Panel Kontrol (Input) -->
             <div class="w-full lg:w-1/3 space-y-6">
                 
-                <!-- Kolom Input API Key -->
-                <div class="glass-panel rounded-2xl shadow-sm p-5 border-l-4 border-l-indigo-500">
-                    <label class="block text-sm font-bold text-slate-800 mb-2">🔑 Google Gemini API Key</label>
-                    <input type="password" id="apiKeyInput" class="block w-full p-2.5 bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors" placeholder="Tempel API Key Anda di sini..." required>
-                    <p class="text-[11px] text-slate-500 mt-2 leading-relaxed">Dapatkan API Key gratis di <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 hover:underline font-semibold">Google AI Studio</a>. Kunci disimpan aman di browser Anda dan tidak dikirim ke pihak ketiga.</p>
-                </div>
-
                 <div class="glass-panel rounded-2xl shadow-lg p-6">
                     <form id="editorForm" class="space-y-6">
                         
@@ -198,19 +191,9 @@
     </main>
 
     <script>
-        // --- MANAJEMEN API KEY ---
-        const apiKeyInput = document.getElementById('apiKeyInput');
-        
-        // Cek LocalStorage untuk memuat key yang tersimpan
-        const savedApiKey = localStorage.getItem('gemini_api_key_product');
-        if (savedApiKey) {
-            apiKeyInput.value = savedApiKey;
-        }
-
-        // Simpan otomatis ke LocalStorage setiap kali diubah
-        apiKeyInput.addEventListener('input', (e) => {
-            localStorage.setItem('gemini_api_key_product', e.target.value.trim());
-        });
+        // --- KONFIGURASI API ---
+        const apiKey = "AQ.Ab8RN6LHi7EzMvSXUHh0OEw5LZHscX8Li-OJ7TadoLrueo9JsA"; // Disuntikkan otomatis oleh environment
+        const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
 
         // --- ELEMEN DOM ---
         const form = document.getElementById('editorForm');
@@ -244,17 +227,11 @@
                     const response = await fetch(url, options);
                     if (!response.ok) {
                         const errBody = await response.text();
-                        
-                        // Deteksi spesifik jika API Key salah/invalid
-                        if (response.status === 400 && errBody.includes("API key not valid")) {
-                            throw new Error("API Key yang Anda masukkan tidak valid. Silakan periksa kembali.");
-                        }
                         throw new Error(`HTTP ${response.status}: ${errBody}`);
                     }
                     return await response.json();
                 } catch (error) {
-                    // Jika errornya dari API Key salah, jangan retry, langsung lempar errornya
-                    if (error.message.includes("tidak valid") || i === retries - 1) throw error;
+                    if (i === retries - 1) throw error;
                     await new Promise(res => setTimeout(res, delays[i]));
                 }
             }
@@ -489,16 +466,8 @@
         // --- SUBMIT FORM ---
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            // 1. Validasi API Key
-            const currentApiKey = apiKeyInput.value.trim();
-            if (!currentApiKey) {
-                showError("Mohon masukkan Google Gemini API Key Anda terlebih dahulu di kolom atas.");
-                apiKeyInput.focus();
-                return;
-            }
 
-            // 2. Validasi Gambar
+            // Validasi Gambar
             if (!originalImageBase64) {
                 showError("Mohon unggah foto produk Anda terlebih dahulu.");
                 return;
@@ -511,9 +480,6 @@
             const custom = document.getElementById('customPrompt').value.trim();
 
             setLoading(true);
-
-            // Set endpoint dengan API key dari input user
-            const endpointUrlUser = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${currentApiKey}`;
 
             const numVariations = 3;
             let successCount = 0;
@@ -550,7 +516,7 @@
                 };
 
                 promises.push(
-                    fetchWithRetry(endpointUrlUser, {
+                    fetchWithRetry(endpointUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -588,11 +554,7 @@
             setLoading(false);
 
             if (successCount === 0) {
-                if (lastErrorMessage.includes("tidak valid")) {
-                    showError(lastErrorMessage);
-                } else {
-                    showError("Gagal menghasilkan gambar. Server mungkin sibuk atau gambar ditolak filter keamanan AI. Pastikan API Key benar dan ubah detail prompt Anda.");
-                }
+                showError("Gagal menghasilkan gambar. Server mungkin sedang sibuk atau gambar ditolak oleh filter keamanan AI. Coba ubah detail/prompt Anda.");
             }
         });
 
